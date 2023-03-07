@@ -72,7 +72,7 @@ public class QueueIteration<E> extends RestartableLookAheadIteration<E> {
 				resultQueue.onRemoveIterator();
 				return;
 			}
-			//log.info("queue: " + res.getClass().toString());
+			log.info("queue: " + res.getClass().toString());
 			if (res instanceof org.eclipse.rdf4j.query.resultio.helpers.BackgroundTupleResult) {
 				resultQueue.add_release(new BufferedCloseableIterator<E, QueryEvaluationException>(res));
 			} else {

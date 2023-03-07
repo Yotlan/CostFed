@@ -10,7 +10,7 @@ import com.fluidops.fedx.evaluation.TripleSource;
  */
 public class SparqlEndpointConfiguration implements EndpointConfiguration {
 
-	private boolean supportsASKQueries = true;
+	private boolean supportsASKQueries = false;
 	
 	/**
 	 * Flag indicating whether ASK queries are supported. Specific

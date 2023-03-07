@@ -128,6 +128,7 @@ public class TBSSSummariesGenerator {
 	
 	boolean putIRI(String iri, long hits, Trie2.Node nd) {
 		Pair<String, String> pair = splitIRI(iri);
+		System.out.println("putIRI::"+pair);
 		return Trie2.insertWord(nd, pair.getFirst(), pair.getSecond(), hits);
 	}
 	
@@ -156,6 +157,7 @@ public class TBSSSummariesGenerator {
 		//String host = "10.15.0.144";
 		//String host = "192.168.0.145";
 		//String host = "ws24348.avicomp.com";
+		/*
 		String host = "localhost";
 		List<String> endpointsMin = Arrays.asList(
 				 "http://" + host + ":8890/sparql",
@@ -204,7 +206,7 @@ public class TBSSSummariesGenerator {
 			 , "http://" + host + ":8891/sparql"
 			 , "http://" + host + ":8892/sparql"
 			 //,
-				///*
+				//
 			 //
 			 //"http://" + host + ":8893/sparql"
 			 //,
@@ -215,25 +217,34 @@ public class TBSSSummariesGenerator {
 			 //,
 			 //"http://" + host + ":8896/sparql"
 			 //,
-			 //*/
+			 //
 			 //"http://" + host + ":8897/sparql"
 			 //,
-			 ///*
+			 //
 			 //"http://" + host + ":8898/sparql"
 			 //,
 			 //"http://" + host + ":8899/sparql"
-			 //*/
+			 //
 		);
 		
 		List<String> endpointsExt = Arrays.asList(
 		        "http://" + host + ":8887/sparql"
 		);
-		
-		List<String> endpoints = endpointsExt;
+		*/
+
+		String localhost = args[0];
+		List<String> endpoints = new ArrayList<>();
+
+		String outputFile = args[1];
+
+		for(int i=2;i<args.length;++i){
+			endpoints.add(localhost+"/sparql?default-graph-uri="+args[i]);
+		}
+
 		//List<String> endpoints = endpointsMin2;
 		//String outputFile = "summaries/sumX-localhost5.n3";
 		//String outputFile = "summaries/sum-localhost.n3";
-		String outputFile = "summaries/sum-localhost_ext.n3";
+		//String outputFile = "summaries/sum-localhost_ext.n3";
 		//String namedGraph = "http://aksw.org/fedbench/";  //can be null. in that case all graph will be considered 
 		String namedGraph = null;
 		TBSSSummariesGenerator generator = new TBSSSummariesGenerator(outputFile);
@@ -316,7 +327,8 @@ public class TBSSSummariesGenerator {
 	 */
 	public void generateSummaries(List<String> endpoints, String graph, int branchLimit) throws IOException
 	{
-		executorService = Executors.newFixedThreadPool(16);
+		// Number of thread to fix
+		executorService = Executors.newFixedThreadPool(endpoints.size()*10);
 		AtomicInteger dsnum = new AtomicInteger(0);
 		for (String endpoint : endpoints)
 		{
@@ -770,16 +782,16 @@ public class TBSSSummariesGenerator {
 		first = true;
 		sb.append(";\n           ds:topObjs");
 
-		List<Pair<String, Long>> topobjstotal = Trie2.findMostHittable(rootObj, isTypePredicate ? Integer.MAX_VALUE : (1000 > MAX_TOP_OBJECTS ? 1000 : MAX_TOP_OBJECTS));
+		List<Pair<String, Long>> topobjstotal = Trie2.findMostHittable(rootObj, /*isTypePredicate ? Integer.MAX_VALUE : */(1000 > MAX_TOP_OBJECTS ? 1000 : MAX_TOP_OBJECTS));
 		List<Pair<String, Long>> topobjs = null;
 		List<String> middleobjs = new ArrayList<String>();
 		long avrmiddleobjcard = 0;
-		if (!isTypePredicate) {
+		/*if (!isTypePredicate) {
 			topobjs = new ArrayList<Pair<String, Long>>();
 			avrmiddleobjcard = doSaleemAlgo(MIN_TOP_OBJECTS, MAX_TOP_OBJECTS, topobjstotal, topobjs, middleobjs);
-		} else {
+		} else {*/
 			topobjs = topobjstotal;
-		}
+		//}
 		for (Pair<String, Long> p : topobjs) {
 			if (!first) sb.append(","); else first = false;
 			sb.append("\n             [ ds:object <").append(makeWellFormed(p.getFirst())).append(">; ds:card ").append(p.getSecond()).append(" ]");
@@ -806,16 +818,16 @@ public class TBSSSummariesGenerator {
 		
 		first = true;
 		sb.append(";\n           ds:objPrefixes");
-		if (!isTypePredicate) {
+		//if (!isTypePredicate) {
 			List<Tuple3<String, Long, Long>> oprefs = Trie2.gatherPrefixes(rootObj, branchLimit);
 			for (Tuple3<String, Long, Long> t : oprefs) {
 				if (!first) sb.append(","); else first = false;
 				sb.append("\n             [ ds:prefix \"").append(encodeStringLiteral(t.getValue0())).append("\"; ds:unique ").append(t.getValue1()).append("; ds:card ").append(t.getValue2()).append(" ]");
 			}
 			if (oprefs.isEmpty()) sb.append(" []");
-		} else {
-			sb.append(" []");
-		}
+		//} else {
+		//	sb.append(" []");
+		//}
 		
 		sb.append(";\n");
 		//log.info("subject: " + topsbjs);

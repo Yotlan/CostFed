@@ -109,6 +109,7 @@ public class TBSSSourceSelection extends SourceSelection {
 			// for each statement determine the relevant sources. Note each  statement pattern is a hyperedge as depicted in step 1 source selection algo given in FedSum paper
 			for (StatementPattern stmt : stmts) 
 			{
+				log.info("STMT: "+stmt);
 				tp++;
 				//cache.clear();
 				stmtToSources.put(stmt, new ArrayList<StatementSource>());
@@ -150,6 +151,7 @@ public class TBSSSourceSelection extends SourceSelection {
 				//-------Step 1 of our source selection---i.e Triple pattern-wise source selection----
 				if (quetzalConfig.mode == QuetzalConfig.Mode.ASK_DOMINANT)   //---ASK_dominant algo
 				{
+					log.info(s + ";;" + p + ";;" + o);
 					if (s == null && p == null && o == null)
 					{
 						for (Endpoint e : endpoints) 
@@ -187,6 +189,7 @@ public class TBSSSourceSelection extends SourceSelection {
 				}
 
 				//--------add hyperedges
+				//System.out.println(sbjVertex+":::"+predVertex+":::"+objVertex);
 				HyperEdge hEdge = new HyperEdge(sbjVertex, predVertex, objVertex);
 				// E.add(hEdge);
 				
@@ -195,6 +198,7 @@ public class TBSSSourceSelection extends SourceSelection {
 			}
 			theDNFHyperVertices.add(v);
 		}
+		//System.out.println("DNFHyperVertices::"+theDNFHyperVertices);
 		long askStartTime = System.currentTimeMillis();
 		log.info(String.format("ask time: %d, remote tasks: %d",  (askStartTime - start), remoteCheckTasks.size()));
 		// if remote checks are necessary, execute them using the concurrency
@@ -220,11 +224,14 @@ public class TBSSSourceSelection extends SourceSelection {
 		//		}
 		int triplePatternWiseSources = 0 ;
 		for (Map.Entry<StatementPattern, List<StatementSource>> stmtentry : stmtToSources.entrySet()) {
+			//System.out.println(stmtentry+"-value::"+stmtentry.getValue()+"-size::"+stmtentry.getValue().size());
 			triplePatternWiseSources = triplePatternWiseSources + stmtentry.getValue().size();
 		}
 		
 		if (triplePatternWiseSources > tp) {
+			//System.out.println(triplePatternWiseSources+"-prune::"+tp);
 			stmtToSources =  pruneSources(theDNFHyperVertices);
+			//System.out.println(stmtToSources);
 		} else {
 			if (log.isDebugEnabled()) {
 				log.debug("Total Triple pattern-wise selected sources: "+ triplePatternWiseSources);
@@ -237,9 +244,10 @@ public class TBSSSourceSelection extends SourceSelection {
 		for (Map.Entry<StatementPattern, List<StatementSource>> stmtentry : stmtToSources.entrySet()) {
 			StatementPattern stmt = stmtentry.getKey();
 			List<StatementSource> sources = stmtentry.getValue();
+			//System.out.println("stmt::"+stmt+"; sources::"+sources);
 			//System.out.println("-----------\n"+stmt);
 			//System.out.println(sources);
-			//triplePatternWiseSources = triplePatternWiseSources + sources.size();
+			triplePatternWiseSources = triplePatternWiseSources + sources.size();
 			// if more than one source -> StatementSourcePattern
 			// exactly one source -> OwnedStatementSourcePattern
 			// otherwise: No resource seems to provide results
@@ -467,6 +475,7 @@ public class TBSSSourceSelection extends SourceSelection {
 	
 	public void lookupFedSum(StatementPattern stmt, String s, String p, String o) {
 		Set<String> ids = ((Summary)(queryInfo.getFedXConnection().getSummary())).lookupSources(stmt);
+		//System.out.println("ids::"+ids);
 		if (ids != null && !ids.isEmpty()) {
 			List<StatementSource> sources = stmtToSources.get(stmt);
 			synchronized (sources) {
@@ -474,6 +483,7 @@ public class TBSSSourceSelection extends SourceSelection {
 					sources.add(new StatementSource(id, StatementSourceType.REMOTE));
 				}
 			}
+			//System.out.println("sources::"+sources);
 		}
 	}
 	
@@ -672,6 +682,10 @@ public class TBSSSourceSelection extends SourceSelection {
 	 */
 	public Map<StatementPattern, List<StatementSource>> pruneSources(List<Map<String, Vertex>> dNFHyperVertices)
 	{
+		//System.out.println("Before pruning");
+		//for (StatementPattern stmt: stmtToSources.keySet()) {
+			//System.out.println(stmt + " have " + stmtToSources.get(stmt).size() + "\nList of corresponding sources: "+stmtToSources.get(stmt));
+		//}
 		for (Map<String, Vertex> vs : dNFHyperVertices)
 		{
 			//System.out.println("--------------new DNF Graph---------");
@@ -690,35 +704,46 @@ public class TBSSSourceSelection extends SourceSelection {
 						{
 							StatementPattern stmt = hyperEdgeToStmt.get(inEdge);
 							StatementPatternSourceDescriptor d = handleStatement(stmt, objectSetProjection, src -> FedSumD_getMatchingObjAuthorities(stmt, src, v), stmtToPrefixes, prefixIntersectionSet);
+							//System.out.println("hybrid inEdge-"+stmt);
 							sd.add(new StatementDescriptor(stmt, d, objectSetProjection));
 						}
 						for (HyperEdge outEdge: v.outEdges)
 						{
 							StatementPattern stmt = hyperEdgeToStmt.get(outEdge);
 							StatementPatternSourceDescriptor d = handleStatement(stmt, subjectSetProjection, src -> getFedSumDMatchingSbjAuthorities(stmt, src), stmtToPrefixes, prefixIntersectionSet);
+							//System.out.println("hybrid outEdge-"+stmt);
 							sd.add(new StatementDescriptor(stmt, d, subjectSetProjection));
 						}
+						//System.out.println("Before hybrid prunning");
+						//for (StatementPattern stmt: stmtToSources.keySet()) {
+							//System.out.println(stmt + " have " + stmtToSources.get(stmt).size() + "\nList of corresponding sources: "+stmtToSources.get(stmt));
+						//}
 						doSourcePrunning(sd, prefixIntersectionSet);
+						//System.out.println("After hybrid prunning");
+						//for (StatementPattern stmt: stmtToSources.keySet()) {
+							//System.out.println(stmt + " have " + stmtToSources.get(stmt).size() + "\nList of corresponding sources: "+stmtToSources.get(stmt));
+						//}
 					}
 					//---------------------------------------------star node--------------------------------------
 					else if (v.outEdges.size() > 1) 
 					{
-						// System.out.println(v.label + " is star node");
+						//System.out.println(v.label + " is star node");
 						for (HyperEdge outEdge : v.outEdges) //has hyperedges or statement patterns
 						{
 							StatementPattern stmt =  hyperEdgeToStmt.get(outEdge);
 							StatementPatternSourceDescriptor d = handleStatement(stmt, subjectSetProjection, src -> getFedSumDMatchingSbjAuthorities(stmt, src), stmtToPrefixes, prefixIntersectionSet);
 							sd.add(new StatementDescriptor(stmt, d, subjectSetProjection));
 						}
-						// System.out.println(v.label+":"+ authIntersectionSet);
+						//System.out.println(v.label+":"+ prefixIntersectionSet);
 						doSourcePrunning(sd, prefixIntersectionSet);
 					}
 					//-------------------sink node ----------------------------------------------------
 					else if (v.inEdges.size() > 1 && v.outEdges.isEmpty())
 					{
-						/*
-						// System.out.println(v.label + " is sink node");
+						
+						//System.out.println(v.label + " is sink node");
 						//--- cant do source pruning for for literal value sink node 
+						/*
 						outerloop: 
 							for (HyperEdge inEdge : v.inEdges) //has hyperedges or statement patterns
 							{
@@ -755,6 +780,8 @@ public class TBSSSourceSelection extends SourceSelection {
 						// System.out.println(v.label+": sink "+ authIntersectionSet);
 						doSourcePrunning(stmtToLstAuthorities, authIntersectionSet);
 						*/
+					} else {
+						//System.out.println(v.label+" is normal node");
 					}
 
 
@@ -763,8 +790,10 @@ public class TBSSSourceSelection extends SourceSelection {
 		}
 		
 		int newSources = 0;
-		for (StatementPattern stmt: stmtToSources.keySet())
+		for (StatementPattern stmt: stmtToSources.keySet()) {
 			newSources = newSources + stmtToSources.get(stmt).size();
+			//System.out.println(stmt + " have " + stmtToSources.get(stmt).size() + "\nList of corresponding sources: "+stmtToSources.get(stmt));
+		}
 		if (log.isDebugEnabled()) {
 			log.debug("Total Triple pattern-wise sources selected : "+ newSources);
 		}
@@ -812,16 +841,21 @@ public class TBSSSourceSelection extends SourceSelection {
 			for (Map.Entry<StatementSource, PrefixSets> srcentry : sd.spsd.srcToPrefixSets.entrySet())
 			{
 				StatementSource src = srcentry.getKey();
+
 				PrefixSets ps = srcentry.getValue();
+
 				SortedSet<String> prefixes = sd.cut.get(ps);
 				
 				intersect(prefixes, prefixIntersectionSet); // updates in ps
+
+				//System.out.println("prefixes-"+prefixes+" intersect "+prefixIntersectionSet+"-prefixIntersectionSet");
 
 				if (prefixes.isEmpty())
 				{
 					sts2remove.add(src);
 				}
 			}
+			//System.out.println("...and his sources to remove"+sts2remove);
 			for (StatementSource src: sts2remove)
 			{
 				sd.spsd.srcToPrefixSets.remove(src);
@@ -1020,6 +1054,7 @@ public class TBSSSourceSelection extends SourceSelection {
 
 	public Set<String> getFedSumDMatchingSbjAuthorities(StatementPattern stmt, StatementSource src)
 	{
+		//System.out.println("SbjAuthorities-"+((Summary)(queryInfo.getFedXConnection().getSummary())).lookupSbjPrefixes(stmt, src.getEndpointID()));
 		return ((Summary)(queryInfo.getFedXConnection().getSummary())).lookupSbjPrefixes(stmt, src.getEndpointID());
 	}
 	
@@ -1137,6 +1172,7 @@ public class TBSSSourceSelection extends SourceSelection {
 	 */
 	public Set<String> FedSumD_getMatchingObjAuthorities(StatementPattern stmt, StatementSource src, Vertex v)
 	{
+		//System.out.println("ObjAuthorities-"+((Summary)(queryInfo.getFedXConnection().getSummary())).lookupObjPrefixes(stmt, src.getEndpointID()));
 		return ((Summary)(queryInfo.getFedXConnection().getSummary())).lookupObjPrefixes(stmt, src.getEndpointID());
 	}
 	

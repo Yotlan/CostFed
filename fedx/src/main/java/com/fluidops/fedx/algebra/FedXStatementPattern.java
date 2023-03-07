@@ -157,6 +157,7 @@ public abstract class FedXStatementPattern extends StatementPattern implements S
 	
 	@Override
 	public FilterValueExpr getFilterExpr() {
+		System.out.println("Filter::"+filterExpr);
 		return filterExpr;
 	}
 
@@ -221,9 +222,11 @@ public abstract class FedXStatementPattern extends StatementPattern implements S
 			return evaluate(bindings.get(0), sources);
 		}
 		
-		if (getFilterExpr() != null) {
-			throw new NotImplementedException("FedXStatementPattern.evaluate(List<BindingSet>)");
-		}
+		//if (getFilterExpr() != null) {
+		//	System.out.println("getFilterExpr::"+getFilterExpr());
+		//	System.out.println("BindingSet::"+bindings);
+		//	throw new NotImplementedException("FedXStatementPattern.evaluate(List<BindingSet>)");
+		//}
 		
 		String preparedQuery;
 		
@@ -236,6 +239,8 @@ public abstract class FedXStatementPattern extends StatementPattern implements S
 		} else { // check
 			preparedQuery = QueryStringUtil.selectQueryStringBoundCheck(this, bindings);
 		}
+
+		System.out.println("preparedQuery::"+preparedQuery);
 		
 		FederationEvalStrategy strategy = queryInfo.getFedXConnection().getStrategy();
 		CloseableIteration<BindingSet, QueryEvaluationException> result = strategy.evaluateAtStatementSources(preparedQuery, sources, getQueryInfo());

@@ -35,8 +35,8 @@ public class QueryEvaluation {
 	
 	QueryProvider qp;
 
-	public QueryEvaluation() throws Exception {
-		qp = new QueryProvider("../queries/");
+	public QueryEvaluation(String queries) throws Exception {
+		qp = new QueryProvider(queries);
 	}
 	
 	/**
@@ -46,16 +46,24 @@ public class QueryEvaluation {
 	public static void main(String[] args) throws Exception 
 	{
 		String cfgName = args[0];
-		String repfile = args.length > 1 ? args[1] : null;
+		String repfile = args[2];
+		String queries = args[3];
+
+		String localhost = args[1];
+		List<String> endpoints = new ArrayList<>();
+
+		for(int i=4;i<args.length;++i){
+			endpoints.add(localhost+"/sparql?default-graph-uri="+args[i]);
+		}
 		
-		String host = "localhost";
+		//String host = "localhost";
 		//String host = "ws24348.avicomp.com";
 		//String host = "192.168.0.145";
 		//String queries = "S1 S2 S3 S4 S5 S6 S7 S8 S9 S10 S11 S12 S13 S14 C1 C2 C3 C4 C6 C7 C8 C9 C10"; //"C1 C3 C5 C6 C7 C8 C9 C10 L1 L2 L3 L4 L5 L6 L7 L8";
 		//String queries = "S1 S2 S3 S4 S5 S6 S7 S8 S9 S10 S11 S12 S13 S14 C1 C2 C3 C6 C7 C8 C9 C10";
 		//String queries = "S1 S2 S3 S4 S5 S6 S7 S8 S9 S10 S11 S12 S13 S14 C1 C2 C3 C4 C6 C7 C8 C9 C10";
-		String queries = "CH3"; // S3 C6 C2
-		
+		//String queries = "CH3"; // S3 C6 C2
+		/*
 		List<String> endpointsMin = Arrays.asList(
 			 "http://" + host + ":8890/sparql",
 			 "http://" + host + ":8891/sparql",
@@ -111,7 +119,7 @@ public class QueryEvaluation {
 		);
 		
 		List<String> endpoints = endpointsMin2;
-		
+		*/
 		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints);
 	
 		for (Map.Entry<String, List<List<Object>>> e : reports.entrySet())
@@ -129,12 +137,13 @@ public class QueryEvaluation {
 	
 	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints) throws Exception {
 		List<List<Object>> report = new ArrayList<List<Object>>();
-		List<List<Object>> sstreport = new ArrayList<List<Object>>();
+		//List<List<Object>> sstreport = new ArrayList<List<Object>>();
 		Map<String, List<List<Object>>> result = new HashMap<String, List<List<Object>>>();
 		result.put("report", report);
-		result.put("sstreport", sstreport);
+		//result.put("sstreport", sstreport);
 		
 		List<String> qnames = Arrays.asList(queries.split(" "));
+		//System.out.println("QUERIES NAMES"+qnames.toString());
 		for (String curQueryName : qnames)
 		{
 			List<Object> reportRow = new ArrayList<Object>();
@@ -142,9 +151,9 @@ public class QueryEvaluation {
 			String curQuery = qp.getQuery(curQueryName);
 			reportRow.add(curQueryName);
 			
-			List<Object> sstReportRow = new ArrayList<Object>();
-			sstreport.add(sstReportRow);
-			sstReportRow.add(curQueryName);
+			//List<Object> sstReportRow = new ArrayList<Object>();
+			//sstreport.add(sstReportRow);
+			//sstReportRow.add(curQueryName);
 			
 			Config config = new Config(cfgName);
 			SailRepository repo = null;
@@ -153,11 +162,13 @@ public class QueryEvaluation {
 			try {
 				repo = FedXFactory.initializeSparqlFederation(config, endpoints);
 				TupleQuery query = repo.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, curQuery);
+				//System.out.println("TupleQuery: "+query);
 				
 			   	long startTime = System.currentTimeMillis();
 			   	res = query.evaluate();
 			    long count = 0;
 			
+				//log.info("RESULT\n");
 			    while (res.hasNext()) {
 			    	BindingSet row = res.next();
 			    	System.out.println(count+": "+ row);
@@ -166,9 +177,10 @@ public class QueryEvaluation {
 			  
 			    long runTime = System.currentTimeMillis() - startTime;
 			    reportRow.add((Long)count); reportRow.add((Long)runTime);
-			    sstReportRow.add((Long)count);
-			    sstReportRow.add(QueryInfo.queryInfo.get().numSources.longValue());
-			    sstReportRow.add(QueryInfo.queryInfo.get().totalSources.longValue());
+			    //sstReportRow.add((Long)count);
+			    //sstReportRow.add(QueryInfo.queryInfo.get().numSources.longValue());
+			    //sstReportRow.add(QueryInfo.queryInfo.get().totalSources.longValue());
+				log.info("QUERY\n"+curQuery);
 			    log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source count: " + QueryInfo.queryInfo.get().numSources.longValue());
 			    //log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source Selection Time: " + QueryInfo.queryInfo.get().getSourceSelection().time);
 			} catch (Throwable e) {
@@ -183,23 +195,32 @@ public class QueryEvaluation {
 				reportRow.add(null); reportRow.add(null);
 			} finally {
 				if (null != res) {
+					System.out.println("CLOSE...");
 		    		res.close();
+					System.out.println("CLOSE!");
 		    	}
 				
 		    	if (null != repo) {
+					System.out.println("SHUTDOWN...");
 		    	    repo.shutDown();
+					System.out.println("SHUTDOWN!");
 		    	}
 	        }
 		}
+		System.out.println("RESULT");
 		return result;
 	}
 	
 	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints) throws Exception {
-		QueryEvaluation qeval = new QueryEvaluation();
+		String queriesPath = queries.split("injected.sparql")[0];
+		String queriesName = queries.split("/")[queries.split("/").length-1];
+		QueryEvaluation qeval = new QueryEvaluation(queriesPath);
 
 		Map<String, List<List<Object>>> result = null;
 		for (int i = 0; i < num; ++i) {
-			Map<String, List<List<Object>>> subReports = qeval.evaluate(queries, cfgName, endpoints);
+			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints);
+			System.out.println("SUBREPORTS");
+			System.out.println(subReports);
 			if (i == 0) {
 				result = subReports;
 			} else {
@@ -216,6 +237,8 @@ public class QueryEvaluation {
 			}
 		}
 		
+		System.out.println("RESULT");
+		System.out.println(result);
 		return result;
 	}
 	
@@ -227,7 +250,7 @@ public class QueryEvaluation {
 		
 		List<Object> firstRow = report.get(0);
 		for (int i = 2; i < firstRow.size(); ++i) {
-			sb.append(",Sample #").append(i - 2);
+			sb.append(",Execution Time");
 		}
 		sb.append("\n");
 		for (List<Object> row : report) {

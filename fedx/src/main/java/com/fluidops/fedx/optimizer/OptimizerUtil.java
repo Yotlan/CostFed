@@ -90,8 +90,8 @@ public class OptimizerUtil
 		}
 		
 		// can happen in SERVICE nodes, if they cannot be optimized
+		List<String> freeVars = new ArrayList<String>();
 		if (tupleExpr instanceof StatementPattern) {
-			List<String> freeVars = new ArrayList<String>();
 			StatementPattern st = (StatementPattern)tupleExpr;
 			if (st.getSubjectVar().getValue()==null)
 				freeVars.add(st.getSubjectVar().getName());
@@ -100,9 +100,9 @@ public class OptimizerUtil
 			if (st.getObjectVar().getValue()==null)
 				freeVars.add(st.getObjectVar().getName());
 		}
+		return freeVars;
 		
-		
-		throw new FedXRuntimeException("Type " + tupleExpr.getClass().getSimpleName() + " not supported for cost estimation. If you run into this, please report a bug.");
+		// throw new FedXRuntimeException("Type " + tupleExpr.getClass().getSimpleName() + " not supported for cost estimation. If you run into this, please report a bug.");
 		
 	}
 }

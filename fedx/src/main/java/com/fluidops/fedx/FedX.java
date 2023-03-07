@@ -206,8 +206,10 @@ public class FedX implements Sail {
 		    scheduler.shutdown();
 		    scheduler = null;
 	        // Abort all running queries
+			System.out.println("ABORT...");
 	        shutDownInternal();
 	        cache.persist();
+			System.out.println("ABORT!");
 	        
 	        monitoring = null;
 	        

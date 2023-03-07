@@ -114,9 +114,11 @@ public abstract class FederationEvalStrategy extends StrictEvaluationStrategy {
 					Resource subj, IRI pred, Value obj, Resource... contexts)
 					throws QueryEvaluationException
 			{
-				throw new FedXRuntimeException(
+				// Return an empty Iteration to avoid the returning problem of this function
+				return new EmptyIteration<>();
+				/*throw new FedXRuntimeException(
 						"Federation Strategy does not support org.openrdf.query.algebra.evaluation.TripleSource#getStatements." +
-						" If you encounter this exception, please report it.");
+						" If you encounter this exception, please report it.");*/
 			}
 
 			@Override

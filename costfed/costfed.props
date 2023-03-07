@@ -15,7 +15,7 @@ endpointProviderClass=org.aksw.simba.quetsal.configuration.EndpointListFromDirec
 #quetzal.mode=INDEX_DOMINANT
 quetzal.mode=ASK_DOMINANT
 quetzal.inputCommonPredThreshold=0.33
-quetzal.fedSummaries=summaries/sum-localhost.n3
+quetzal.fedSummaries=costfed/summaries/sum.n3
 #quetzal.fedSummaries=k:\\projects\\costfed\\sake-summaries
 #quetzal.endpoints=C:\\Users\\Saleem\\Downloads\\CostFed-master\\costfed\\endpoints
 
@@ -30,5 +30,5 @@ debugWorkerScheduler=false
 debugQueryPlan=false
 
 # http client related config
-maxHttpConnectionCount=30
-maxHttpConnectionCountPerRoute=30
+maxHttpConnectionCount=50
+maxHttpConnectionCountPerRoute=50

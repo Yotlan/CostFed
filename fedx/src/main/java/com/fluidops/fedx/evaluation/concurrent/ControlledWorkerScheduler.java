@@ -81,6 +81,7 @@ public class ControlledWorkerScheduler implements Scheduler {
 					t = threadQueue_.poll(timeout, TimeUnit.MILLISECONDS);
 				} catch (InterruptedException ignore) {
 					// do nothing
+					log.debug("ignore");
 				}
 			} else {
 				t = threadQueue_.poll();
@@ -158,6 +159,7 @@ public class ControlledWorkerScheduler implements Scheduler {
 		synchronized (taskQueue_) {
 			while (true) {
 				Task t = taskQueue_.poll();
+				System.out.println("TASK "+t);
 				if (null == t) {
 					break;
 				}
@@ -181,7 +183,9 @@ public class ControlledWorkerScheduler implements Scheduler {
 			//try { taskQueue_.put(new Runnable() { @Override public void run() {}});	} catch (InterruptedException ignore) {}
 			
 			while (!threads_.isEmpty()) {
+				System.out.println("SIZE "+threads_.size());
 				try {
+					System.out.println("wait...");
 					threads_.wait();
 				} catch (InterruptedException ex) {
 					throw new RuntimeInterruptedException(ex);
