@@ -6,6 +6,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,12 +16,21 @@ import org.slf4j.LoggerFactory;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.Query;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.explanation.Explanation;
+import org.eclipse.rdf4j.query.explanation.Explanation.Level;
+import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.repository.sail.SailTupleQuery;
+import org.eclipse.rdf4j.repository.sparql.query.SPARQLTupleQuery;
 
 import com.fluidops.fedx.Config;
 import com.fluidops.fedx.FedXFactory;
 import com.fluidops.fedx.structures.QueryInfo;
+import com.fluidops.fedx.algebra.StatementSource;
+
+import org.aksw.sparql.query.algebra.helpers.BGPGroupGenerator;
 
 public class QueryEvaluation {
 	protected static final Logger log = LoggerFactory.getLogger(QueryEvaluation.class);
@@ -46,13 +56,17 @@ public class QueryEvaluation {
 	public static void main(String[] args) throws Exception 
 	{
 		String cfgName = args[0];
-		String repfile = args[2];
-		String queries = args[3];
+		String resultfile = args[2];
+		String provenancefile = args[3];
+		String explanationfile = args[4];
+		String statfile = args[5];
+		String timeout = args[6];
+		String queries = args[7];
 
 		String localhost = args[1];
 		List<String> endpoints = new ArrayList<>();
 
-		for(int i=4;i<args.length;++i){
+		for(int i=8;i<args.length;++i){
 			endpoints.add(localhost+"/sparql?default-graph-uri="+args[i]);
 		}
 		
@@ -120,27 +134,40 @@ public class QueryEvaluation {
 		
 		List<String> endpoints = endpointsMin2;
 		*/
-		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints);
+		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout));
 	
 		for (Map.Entry<String, List<List<Object>>> e : reports.entrySet())
 		{
 			List<List<Object>> report = e.getValue();
 			String r = printReport(report);
 			log.info(r);
-			if (null != repfile) {
-				FileUtils.write(new File(repfile + "-" + e.getKey() + ".csv"), r);
+			if (e.getKey() == "queryexplain") {
+				FileUtils.write(new File(explanationfile), r);
+			}
+			if (e.getKey() == "report") {
+				FileUtils.write(new File(resultfile), r);
+			}
+			if (e.getKey() == "sstreport") {
+				FileUtils.write(new File(provenancefile), r);
+			}
+			if (e.getKey() == "stat") {
+				FileUtils.write(new File(statfile), r);
 			}
 		}
 
 		System.exit(0);
 	}
 	
-	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints) throws Exception {
+	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints, int timeout) throws Exception {
 		List<List<Object>> report = new ArrayList<List<Object>>();
-		//List<List<Object>> sstreport = new ArrayList<List<Object>>();
+		List<List<Object>> sstreport = new ArrayList<List<Object>>();
+		List<List<Object>> queryexplain = new ArrayList<List<Object>>();
+		List<List<Object>> stat = new ArrayList<List<Object>>();
 		Map<String, List<List<Object>>> result = new HashMap<String, List<List<Object>>>();
 		result.put("report", report);
-		//result.put("sstreport", sstreport);
+		result.put("sstreport", sstreport);
+		result.put("queryexplain", queryexplain);
+		result.put("stat", stat);
 		
 		List<String> qnames = Arrays.asList(queries.split(" "));
 		//System.out.println("QUERIES NAMES"+qnames.toString());
@@ -151,9 +178,17 @@ public class QueryEvaluation {
 			String curQuery = qp.getQuery(curQueryName);
 			reportRow.add(curQueryName);
 			
-			//List<Object> sstReportRow = new ArrayList<Object>();
-			//sstreport.add(sstReportRow);
-			//sstReportRow.add(curQueryName);
+			List<Object> sstReportRow = new ArrayList<Object>();
+			sstreport.add(sstReportRow);
+			sstReportRow.add(curQueryName);
+
+			List<Object> queryExplainRow = new ArrayList<Object>();
+			queryexplain.add(queryExplainRow);
+			queryExplainRow.add(curQueryName);
+
+			List<Object> statRow = new ArrayList<Object>();
+			stat.add(statRow);
+			statRow.add(curQueryName);
 			
 			Config config = new Config(cfgName);
 			SailRepository repo = null;
@@ -162,7 +197,10 @@ public class QueryEvaluation {
 			try {
 				repo = FedXFactory.initializeSparqlFederation(config, endpoints);
 				TupleQuery query = repo.getConnection().prepareTupleQuery(QueryLanguage.SPARQL, curQuery);
+				query.setMaxExecutionTime(timeout);
 				//System.out.println("TupleQuery: "+query);
+
+				queryExplainRow.add((String)((SailTupleQuery)query).getParsedQuery().toString());
 				
 			   	long startTime = System.currentTimeMillis();
 			   	res = query.evaluate();
@@ -171,17 +209,40 @@ public class QueryEvaluation {
 				//log.info("RESULT\n");
 			    while (res.hasNext()) {
 			    	BindingSet row = res.next();
-			    	System.out.println(count+": "+ row);
+			    	//System.out.println(count+": "+ row);
+					reportRow.add((BindingSet)row);
 			    	count++;
 			    }
 			  
 			    long runTime = System.currentTimeMillis() - startTime;
-			    reportRow.add((Long)count); reportRow.add((Long)runTime);
+			    //reportRow.add((Long)count); reportRow.add((Long)runTime);
+				List<StatementPattern> stmtPattern = BGPGroupGenerator.generateBgpGroups(curQuery).get(0);
+				Map<StatementPattern, List<StatementSource>> rows = new LinkedHashMap<>();
+				for (StatementPattern stmt: stmtPattern) {
+					rows.put(stmt, new ArrayList<>());
+				}
+				Map<StatementPattern, List<StatementSource>> stmtToSources = QueryInfo.queryInfo.get().getSourceSelection().getStmtToSources();
+				for (StatementPattern stmt : stmtToSources.keySet()) {
+					rows.replace(stmt, stmtToSources.get(stmt));
+				}
+				for (StatementPattern temp_row : rows.keySet()) {
+					Map<String, String> row = new LinkedHashMap<>();
+					row.put(temp_row.toString().trim().replace("\n", "").replace(",", ";"), rows.get(temp_row).toString().trim().replace("\n", "").replace(",", ";"));
+					sstReportRow.add(row);
+				}
+				//sstReportRow.add(QueryInfo.queryInfo.get().getSourceSelection().getStmtToSources());
 			    //sstReportRow.add((Long)count);
 			    //sstReportRow.add(QueryInfo.queryInfo.get().numSources.longValue());
 			    //sstReportRow.add(QueryInfo.queryInfo.get().totalSources.longValue());
 				log.info("QUERY\n"+curQuery);
 			    log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source count: " + QueryInfo.queryInfo.get().numSources.longValue());
+				statRow.add(curQueryName);
+				statRow.add("costfed");
+				statRow.add("instance_id");
+				statRow.add("batch_id");
+				statRow.add("attempt_id");
+				statRow.add(runTime);
+				statRow.add("N/A");
 			    //log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source Selection Time: " + QueryInfo.queryInfo.get().getSourceSelection().time);
 			} catch (Throwable e) {
 				e.printStackTrace();
@@ -195,32 +256,34 @@ public class QueryEvaluation {
 				reportRow.add(null); reportRow.add(null);
 			} finally {
 				if (null != res) {
-					System.out.println("CLOSE...");
+					//System.out.println("CLOSE...");
 		    		res.close();
-					System.out.println("CLOSE!");
+					//System.out.println("CLOSE!");
 		    	}
 				
 		    	if (null != repo) {
-					System.out.println("SHUTDOWN...");
+					//System.out.println("SHUTDOWN...");
 		    	    repo.shutDown();
-					System.out.println("SHUTDOWN!");
+					//System.out.println("SHUTDOWN!");
 		    	}
 	        }
 		}
-		System.out.println("RESULT");
+		//System.out.println("RESULT");
 		return result;
 	}
 	
-	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints) throws Exception {
+	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints, int timeout) throws Exception {
 		String queriesPath = queries.split("injected.sparql")[0];
+		System.out.println("QUERIES PATH: "+queries);
 		String queriesName = queries.split("/")[queries.split("/").length-1];
+		System.out.println("QUERIES NAME: "+queries);
 		QueryEvaluation qeval = new QueryEvaluation(queriesPath);
 
 		Map<String, List<List<Object>>> result = null;
 		for (int i = 0; i < num; ++i) {
-			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints);
-			System.out.println("SUBREPORTS");
-			System.out.println(subReports);
+			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints, timeout);
+			//System.out.println("SUBREPORTS");
+			//System.out.println(subReports);
 			if (i == 0) {
 				result = subReports;
 			} else {
@@ -237,8 +300,8 @@ public class QueryEvaluation {
 			}
 		}
 		
-		System.out.println("RESULT");
-		System.out.println(result);
+		//System.out.println("RESULT");
+		//System.out.println(result);
 		return result;
 	}
 	
@@ -246,15 +309,17 @@ public class QueryEvaluation {
 		if (report.isEmpty()) return "";
 		
 		StringBuilder sb = new StringBuilder();
-		sb.append("Query,#Results");
+		sb.append("Result #").append(0);
 		
 		List<Object> firstRow = report.get(0);
 		for (int i = 2; i < firstRow.size(); ++i) {
-			sb.append(",Execution Time");
+			sb.append(",Result #").append(i-1);
 		}
 		sb.append("\n");
 		for (List<Object> row : report) {
-			for (int c = 0; c < row.size(); ++c) {
+			//sb.append((repfile.split("/")[repfile.split("/").length-1]).split("-")[0]);
+			//sb.append(",");
+			for (int c = 1; c < row.size(); ++c) {
 				sb.append(row.get(c));
 				if (c != row.size() - 1) {
 					sb.append(",");
