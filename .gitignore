@@ -1,6 +1,8 @@
-/.classpath
-/.project
-/.settings
-/*.db
-/target
-
+.classpath
+.project
+.settings
+*.db
+target/
+.m2/
+*.n3
+results/injected.sparql.error.txt
