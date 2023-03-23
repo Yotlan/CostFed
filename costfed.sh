@@ -24,6 +24,7 @@ fi
 
 if [ $11 = true ]; then
     echo "Execute query $query for $nbendpoints endpoints..."
+    echo "java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $statFile $timeout $query $endpoints >> /dev/null"
     java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $statFile $timeout $query $endpoints >> /dev/null
     echo "Execute query $query for $nbendpoints endpoints is done!"
 fi
