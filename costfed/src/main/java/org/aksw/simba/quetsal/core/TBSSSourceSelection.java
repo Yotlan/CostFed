@@ -162,7 +162,8 @@ public class TBSSSourceSelection extends SourceSelection {
 						if (p.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type") && o != null) {
 							lookupFedSumClass(stmt, p, o);
 						} else if (!quetzalConfig.commonPredicates.contains(p) || (s == null && o == null)) {
-							lookupFedSum(stmt, s /*sa*/, p, o /*oa*/);
+							//lookupFedSum(stmt, s /*sa*/, p, o /*oa*/);
+							cache_ASKselection(stmt);
 						} else {
 							cache_ASKselection(stmt);
 						}

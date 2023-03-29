@@ -13,24 +13,20 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.Query;
+import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryInterruptedException;
 import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.query.explanation.Explanation;
-import org.eclipse.rdf4j.query.explanation.Explanation.Level;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.repository.sail.SailTupleQuery;
-import org.eclipse.rdf4j.repository.sparql.query.SPARQLTupleQuery;
-
 import com.fluidops.fedx.Config;
 import com.fluidops.fedx.FedXFactory;
 import com.fluidops.fedx.structures.QueryInfo;
 import com.fluidops.fedx.algebra.StatementSource;
 
+import org.aksw.simba.quetsal.configuration.QuetzalConfig;
 import org.aksw.sparql.query.algebra.helpers.BGPGroupGenerator;
 
 public class QueryEvaluation {
@@ -62,14 +58,18 @@ public class QueryEvaluation {
 		String explanationfile = args[4];
 		String statfile = args[5];
 		String timeout = args[6];
-		String queries = args[7];
+		String summary = args[7];
+		String queries = args[8];
 
 		String localhost = args[1];
 		List<String> endpoints = new ArrayList<>();
 
-		for(int i=8;i<args.length;++i){
+		for(int i=9;i<args.length;++i){
 			endpoints.add(localhost+"/sparql?default-graph-uri="+args[i]);
 		}
+
+		QuetzalConfig config = new QuetzalConfig(new Config(cfgName));
+		config.initialize(summary);
 		
 		//String host = "localhost";
 		//String host = "ws24348.avicomp.com";
