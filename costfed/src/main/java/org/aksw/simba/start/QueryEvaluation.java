@@ -252,8 +252,9 @@ public class QueryEvaluation {
 				statRow.add("batch_id");
 				statRow.add("attempt_id");
 				statRow.add(runTime);
-				statRow.add("N/A");
+				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().nbAskQuery);
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().time);
+				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
 				String r4 = printReport(stat);
 				FileUtils.write(new File(statfile), r4);
 			} catch (QueryInterruptedException e) {
@@ -264,8 +265,9 @@ public class QueryEvaluation {
 				statRow.add("batch_id");
 				statRow.add("attempt_id");
 				statRow.add("timeout");
-				statRow.add("N/A");
+				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().nbAskQuery);
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().time);
+				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
 				String r4 = printReport(stat);
 				FileUtils.write(new File(statfile), r4);
 			} catch (Throwable e) {

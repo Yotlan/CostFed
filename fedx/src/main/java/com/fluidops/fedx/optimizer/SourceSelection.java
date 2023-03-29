@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,8 @@ public abstract class SourceSelection {
 	protected final QueryInfo queryInfo;
 	
 	public long time = 0;
+	public long planningTime = 0;
+	public int nbAskQuery = 0;
 	/**
 	 * Map statements to their sources.
 	 */

@@ -60,6 +60,7 @@ public class Optimizer {
 		
 		
 		/* original sesame optimizers */
+		long planningTime = System.currentTimeMillis();
 		new ConstantOptimizer(strategy).optimize(query, dataset, bindings);	// maybe remove this optimizer later
 
 		new DisjunctiveConstraintOptimizer().optimize(query, dataset, bindings);
@@ -134,8 +135,11 @@ public class Optimizer {
 //		}
 		// if the query has a single relevant source (and if it is no a SERVICE query), evaluate at this source only
 		Set<Endpoint> relevantSources = sourceSelection.getRelevantSources();
-		if (relevantSources.size()==1 && !info.hasService())
+		if (relevantSources.size()==1 && !info.hasService()) {
+			long planningQueryTime = System.currentTimeMillis() - planningTime;
+			queryInfo.getSourceSelection().planningTime = planningQueryTime;
 			return new SingleSourceQuery(query, relevantSources.iterator().next(), queryInfo);		
+		}
 		
 		if (info.hasService())
 			new ServiceOptimizer(queryInfo).optimize(query);
@@ -157,6 +161,9 @@ public class Optimizer {
 		
 		if (logger.isTraceEnabled())
 			logger.trace("Query after Optimization: " + query);
+
+		long planningQueryTime = System.currentTimeMillis() - planningTime;
+		queryInfo.getSourceSelection().planningTime = planningQueryTime;
 
 		return query;
 	}	

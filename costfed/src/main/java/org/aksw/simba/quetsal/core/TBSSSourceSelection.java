@@ -207,6 +207,7 @@ public class TBSSSourceSelection extends SourceSelection {
 			SourceSelectionExecutorWithLatch.run(queryInfo.getFederation().getScheduler(), this, remoteCheckTasks, cache);
 		}
 
+		this.nbAskQuery = remoteCheckTasks.size();
 		if (log.isDebugEnabled()) {
 			log.debug("Number of ASK request: " + remoteCheckTasks.size());
 		}
