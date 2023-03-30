@@ -238,7 +238,7 @@ public class TBSSSummariesGenerator {
 		String outputFile = args[1];
 
 		for(int i=2;i<args.length;++i){
-			endpoints.add(localhost+"/sparql?default-graph-uri="+args[i]);
+			endpoints.add(localhost+"/?default-graph-uri="+args[i]);
 		}
 
 		//List<String> endpoints = endpointsMin2;

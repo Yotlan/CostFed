@@ -151,6 +151,8 @@ public class TBSSSourceSelection extends SourceSelection {
 				//-------Step 1 of our source selection---i.e Triple pattern-wise source selection----
 				if (quetzalConfig.mode == QuetzalConfig.Mode.ASK_DOMINANT)   //---ASK_dominant algo
 				{
+					System.out.println("Common predicates: " + quetzalConfig.commonPredicates);
+
 					log.info(s + ";;" + p + ";;" + o);
 					if (s == null && p == null && o == null)
 					{
@@ -162,8 +164,8 @@ public class TBSSSourceSelection extends SourceSelection {
 						if (p.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type") && o != null) {
 							lookupFedSumClass(stmt, p, o);
 						} else if (!quetzalConfig.commonPredicates.contains(p) || (s == null && o == null)) {
-							//lookupFedSum(stmt, s /*sa*/, p, o /*oa*/);
-							cache_ASKselection(stmt);
+							lookupFedSum(stmt, s /*sa*/, p, o /*oa*/);
+							//cache_ASKselection(stmt);
 						} else {
 							cache_ASKselection(stmt);
 						}

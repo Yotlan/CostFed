@@ -19,6 +19,7 @@ endpoints=$(seq -s " " -f "http://www.ratingsite%01g.fr/" 0 $batch; seq -s " " -
 nbendpoints=$((($batch+1)*2))
 
 sed -Ei "s#quetzal.fedSummaries=.*#quetzal.fedSummaries=$summary#g" costfed/costfed.props
+sed -Ei "s#quetzal.fedSummaries=.*#quetzal.fedSummaries=$summary#g" costfed/fedx.props
 
 if [ $generateSummaries = true ]; then
     echo "Generating summaries for $nbendpoints endpoints..."
@@ -32,7 +33,7 @@ fi
 if [ $executeQuery = true ]; then
     echo "Execute query $query for $nbendpoints endpoints..."
     echo "$summary"
-    #echo "java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $statFile $timeout $query $endpoints >> /dev/null"
-    java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $statFile $timeout $summary $query $endpoints >> /dev/null
+    echo "java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $statFile $timeout $summary $query $endpoints >> /dev/null"
+    java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $statFile $timeout $summary $query $endpoints #>> /dev/null
     echo "Execute query $query for $nbendpoints endpoints is done!"
 fi
