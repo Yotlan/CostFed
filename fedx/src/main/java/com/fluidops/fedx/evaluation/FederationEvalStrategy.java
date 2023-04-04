@@ -115,10 +115,10 @@ public abstract class FederationEvalStrategy extends StrictEvaluationStrategy {
 					throws QueryEvaluationException
 			{
 				// Return an empty Iteration to avoid the returning problem of this function
-				return new EmptyIteration<>();
-				/*throw new FedXRuntimeException(
+				//return new EmptyIteration<>();
+				throw new FedXRuntimeException(
 						"Federation Strategy does not support org.openrdf.query.algebra.evaluation.TripleSource#getStatements." +
-						" If you encounter this exception, please report it.");*/
+						" If you encounter this exception, please report it.");
 			}
 
 			@Override

@@ -116,9 +116,13 @@ public class JoinOrderOptimizer extends StatementGroupOptimizer {
 		
 		// find card for arguments
 		for (TupleExpr te : joinArgs) {
-			te.visit(cvis);
-			cardPairs.add(new CardinalityVisitor.CardPair(te, cvis.getDescriptor()));
-			cvis.reset();
+
+			// Skip StatementPattern tuple expression since they cannot be optimised
+			if ( ! te.getClass().getSimpleName().equals("StatementPattern") ) {
+				te.visit(cvis);
+				cardPairs.add(new CardinalityVisitor.CardPair(te, cvis.getDescriptor()));
+				cvis.reset();
+			}			
 		}
 		
 		// sort arguments according their cards

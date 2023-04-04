@@ -225,12 +225,18 @@ public class QueryEvaluation {
 				FileUtils.write(new File(provenancefile), r1);
 			
 				//log.info("RESULT\n");
-			    // while (res.hasNext()) {
-			    // 	BindingSet row = res.next();
-			    // 	//System.out.println(count+": "+ row);
-				// 	reportRow.add((BindingSet)row);
-			    // 	count++;
-			    // }
+			    while (res.hasNext()) {
+			    	BindingSet row = res.next();
+			    	//System.out.println(count+": "+ row);
+					reportRow.add((BindingSet)row);
+			    	count++;
+			    }
+			    while (res.hasNext()) {
+			    	BindingSet row = res.next();
+			    	//System.out.println(count+": "+ row);
+					reportRow.add((BindingSet)row);
+			    	count++;
+			    }
 				String r3 = printReport(report);
 				FileUtils.write(new File(resultfile), r3);
 			  
@@ -254,9 +260,6 @@ public class QueryEvaluation {
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
 				String r4 = printReport(stat);
 				FileUtils.write(new File(statfile), r4);
-				res.close();
-				System.exit(0);
-				//res = null;
 			} catch (QueryInterruptedException e) {
 				reportRow.add("");
 				statRow.add(curQueryName);

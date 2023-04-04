@@ -99,10 +99,10 @@ public class OptimizerUtil
 				freeVars.add(st.getPredicateVar().getName());
 			if (st.getObjectVar().getValue()==null)
 				freeVars.add(st.getObjectVar().getName());
+			//return freeVars;
 		}
-		return freeVars;
 		
-		// throw new FedXRuntimeException("Type " + tupleExpr.getClass().getSimpleName() + " not supported for cost estimation. If you run into this, please report a bug.");
+		throw new FedXRuntimeException("Type " + tupleExpr.getClass().getSimpleName() + " not supported for cost estimation. If you run into this, please report a bug.");
 		
 	}
 }
