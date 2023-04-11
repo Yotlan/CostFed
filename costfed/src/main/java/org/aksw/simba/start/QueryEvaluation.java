@@ -3,6 +3,7 @@ package org.aksw.simba.start;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -56,15 +57,15 @@ public class QueryEvaluation {
 		String resultfile = args[2];
 		String provenancefile = args[3];
 		String explanationfile = args[4];
-		String statfile = args[5];
-		String timeout = args[6];
-		String summary = args[7];
-		String queries = args[8];
+		// String statfile = args[5];
+		String timeout = args[5];
+		String summary = args[6];
+		String queries = args[7];
 
 		String localhost = args[1];
 		List<String> endpoints = new ArrayList<>();
 
-		for(int i=9;i<args.length;++i){
+		for(int i=8;i<args.length;++i){
 			endpoints.add(localhost+"/?default-graph-uri="+args[i]);
 		}
 		
@@ -132,7 +133,7 @@ public class QueryEvaluation {
 		
 		List<String> endpoints = endpointsMin2;
 		*/
-		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout), explanationfile, resultfile, provenancefile, statfile);
+		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout), explanationfile, resultfile, provenancefile);
 	
 		/*for (Map.Entry<String, List<List<Object>>> e : reports.entrySet())
 		{
@@ -156,7 +157,7 @@ public class QueryEvaluation {
 		System.exit(0);
 	}
 	
-	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile, String statfile) throws Exception {
+	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile) throws Exception {
 		List<List<Object>> report = new ArrayList<List<Object>>();
 		List<List<Object>> sstreport = new ArrayList<List<Object>>();
 		List<List<Object>> queryexplain = new ArrayList<List<Object>>();
@@ -166,6 +167,12 @@ public class QueryEvaluation {
 		result.put("sstreport", sstreport);
 		result.put("queryexplain", queryexplain);
 		result.put("stat", stat);
+
+		String homeDir = Paths.get(provenancefile).getParent().toString();
+		String sourceSelectionTimeFile = homeDir + "/source_selection_time.txt";
+		String planningTimeFile = homeDir + "/planning_time.txt";
+		String askFile = homeDir + "/ask.txt";
+		String execTimeFile = homeDir + "/exec_time.txt";
 		
 		List<String> qnames = Arrays.asList(queries.split(" "));
 		//System.out.println("QUERIES NAMES"+qnames.toString());
@@ -212,6 +219,10 @@ public class QueryEvaluation {
 			   	res = query.evaluate();
 			    long count = 0;
 
+				FileUtils.write(new File(sourceSelectionTimeFile), String.valueOf(QueryInfo.queryInfo.get().getSourceSelection().time));
+				FileUtils.write(new File(planningTimeFile), String.valueOf(QueryInfo.queryInfo.get().getSourceSelection().planningTime));
+				FileUtils.write(new File(askFile), String.valueOf(QueryInfo.queryInfo.get().getSourceSelection().nbAskQuery));
+
 				Map<StatementPattern, List<StatementSource>> stmtToSources = QueryInfo.queryInfo.get().getSourceSelection().getStmtToSources();
 				for (StatementPattern stmt : stmtToSources.keySet()) {
 					rows.replace(stmt, stmtToSources.get(stmt));
@@ -249,7 +260,7 @@ public class QueryEvaluation {
 				log.info("QUERY\n"+curQuery);
 			    log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source count: " + QueryInfo.queryInfo.get().numSources.longValue());
 			    //log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source Selection Time: " + QueryInfo.queryInfo.get().getSourceSelection().time);
-				statRow.add(curQueryName);
+				/*statRow.add(curQueryName);
 				statRow.add("costfed");
 				statRow.add("instance_id");
 				statRow.add("batch_id");
@@ -258,10 +269,10 @@ public class QueryEvaluation {
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().nbAskQuery);
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().time);
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
-				String r4 = printReport(stat);
-				FileUtils.write(new File(statfile), r4);
+				String r4 = printReport(stat);*/
+				FileUtils.write(new File(execTimeFile), String.valueOf(runTime));
 			} catch (QueryInterruptedException e) {
-				reportRow.add("");
+				/*reportRow.add("");
 				statRow.add(curQueryName);
 				statRow.add("costfed");
 				statRow.add("instance_id");
@@ -272,7 +283,7 @@ public class QueryEvaluation {
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().time);
 				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
 				String r4 = printReport(stat);
-				FileUtils.write(new File(statfile), r4);
+				FileUtils.write(new File(statfile), r4);*/
 			} catch (Throwable e) {
 				e.printStackTrace();
 				log.error("", e);
@@ -301,7 +312,7 @@ public class QueryEvaluation {
 		return result;
 	}
 	
-	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile, String statfile) throws Exception {
+	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile) throws Exception {
 		String queriesPath = queries.split("injected.sparql")[0];
 		System.out.println("QUERIES PATH: "+queries);
 		String queriesName = queries.split("/")[queries.split("/").length-1];
@@ -310,7 +321,7 @@ public class QueryEvaluation {
 
 		Map<String, List<List<Object>>> result = null;
 		for (int i = 0; i < num; ++i) {
-			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints, timeout, explanationfile, resultfile, provenancefile, statfile);
+			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints, timeout, explanationfile, resultfile, provenancefile);
 			//System.out.println("SUBREPORTS");
 			//System.out.println(subReports);
 			if (i == 0) {
