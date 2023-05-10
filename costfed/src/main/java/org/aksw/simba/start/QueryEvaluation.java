@@ -237,7 +237,7 @@ public class QueryEvaluation {
 				FileUtils.write(new File(provenancefile), r1);
 			
 				//log.info("RESULT\n");
-				if(Boolean.valueOf(noExec)){
+				if(!Boolean.valueOf(noExec)){
 					while (res.hasNext()) {
 						BindingSet row = res.next();
 						//System.out.println(count+": "+ row);
