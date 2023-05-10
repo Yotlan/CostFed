@@ -61,11 +61,12 @@ public class QueryEvaluation {
 		String timeout = args[5];
 		String summary = args[6];
 		String queries = args[7];
+		String noExec = args[8];
 
 		String localhost = args[1];
 		List<String> endpoints = new ArrayList<>();
 
-		for(int i=8;i<args.length;++i){
+		for(int i=9;i<args.length;++i){
 			endpoints.add(localhost+"/?default-graph-uri="+args[i]);
 		}
 		
@@ -133,7 +134,7 @@ public class QueryEvaluation {
 		
 		List<String> endpoints = endpointsMin2;
 		*/
-		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout), explanationfile, resultfile, provenancefile);
+		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout), explanationfile, resultfile, provenancefile, noexec);
 	
 		/*for (Map.Entry<String, List<List<Object>>> e : reports.entrySet())
 		{
@@ -157,7 +158,7 @@ public class QueryEvaluation {
 		System.exit(0);
 	}
 	
-	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile) throws Exception {
+	public Map<String, List<List<Object>>> evaluate(String queries, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile, String noExec) throws Exception {
 		List<List<Object>> report = new ArrayList<List<Object>>();
 		List<List<Object>> sstreport = new ArrayList<List<Object>>();
 		List<List<Object>> queryexplain = new ArrayList<List<Object>>();
@@ -236,18 +237,20 @@ public class QueryEvaluation {
 				FileUtils.write(new File(provenancefile), r1);
 			
 				//log.info("RESULT\n");
-			    while (res.hasNext()) {
-			    	BindingSet row = res.next();
-			    	//System.out.println(count+": "+ row);
-					reportRow.add((BindingSet)row);
-			    	count++;
-			    }
-			    while (res.hasNext()) {
-			    	BindingSet row = res.next();
-			    	//System.out.println(count+": "+ row);
-					reportRow.add((BindingSet)row);
-			    	count++;
-			    }
+				if(Boolean.valueOf(noExec)){
+					while (res.hasNext()) {
+						BindingSet row = res.next();
+						//System.out.println(count+": "+ row);
+						reportRow.add((BindingSet)row);
+						count++;
+					}
+					while (res.hasNext()) {
+						BindingSet row = res.next();
+						//System.out.println(count+": "+ row);
+						reportRow.add((BindingSet)row);
+						count++;
+					}
+				}
 				String r3 = printReport(report);
 				FileUtils.write(new File(resultfile), r3);
 			  
@@ -312,7 +315,7 @@ public class QueryEvaluation {
 		return result;
 	}
 	
-	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile) throws Exception {
+	static Map<String, List<List<Object>>> multyEvaluate(String queries, int num, String cfgName, List<String> endpoints, int timeout, String explanationfile, String resultfile, String provenancefile, String noExec) throws Exception {
 		String queriesPath = queries.split("injected.sparql")[0];
 		System.out.println("QUERIES PATH: "+queries);
 		String queriesName = queries.split("/")[queries.split("/").length-1];
@@ -321,7 +324,7 @@ public class QueryEvaluation {
 
 		Map<String, List<List<Object>>> result = null;
 		for (int i = 0; i < num; ++i) {
-			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints, timeout, explanationfile, resultfile, provenancefile);
+			Map<String, List<List<Object>>> subReports = qeval.evaluate(queriesName, cfgName, endpoints, timeout, explanationfile, resultfile, provenancefile, noExec);
 			//System.out.println("SUBREPORTS");
 			//System.out.println(subReports);
 			if (i == 0) {

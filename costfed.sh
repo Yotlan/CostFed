@@ -14,6 +14,7 @@ batch=$((9+($batch_id*10)))
 generateSummaries=$9
 executeQuery=$10
 summary=$11
+noExec=$12
 
 endpoints=$(seq -s " " -f "http://www.ratingsite%01g.fr/" 0 $batch; seq -s " " -f "http://www.vendor%01g.fr/" 0 $batch)
 nbendpoints=$((($batch+1)*2))
@@ -38,8 +39,8 @@ fi
 if [ $executeQuery = true ]; then
     echo "Execute query $query for $nbendpoints endpoints..."
     echo "$summary"
-    echo "java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $timeout $summary $query $endpoints >> /dev/null"
-    java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $timeout $summary $query $endpoints #>> /dev/null
+    echo "java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $timeout $summary $query $noExec $endpoints >> /dev/null"
+    java -classpath "costfed/target/costfed-core-0.0.1-SNAPSHOT.jar:costfed/target/*" org.aksw.simba.start.QueryEvaluation $propsFile $localhost $resultFile $provenanceFile $explainFile $timeout $summary $query $noExec $endpoints #>> /dev/null
     status=$?
     if [ $status -eq 0 ]; then
         echo "Execute query $query for $nbendpoints endpoints is done!"
