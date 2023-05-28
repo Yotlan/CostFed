@@ -134,7 +134,7 @@ public class QueryEvaluation {
 		
 		List<String> endpoints = endpointsMin2;
 		*/
-		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout), explanationfile, resultfile, provenancefile, noexec);
+		Map<String, List<List<Object>>> reports = multyEvaluate(queries, 1, cfgName, endpoints, Integer.valueOf(timeout), explanationfile, resultfile, provenancefile, noExec);
 	
 		/*for (Map.Entry<String, List<List<Object>>> e : reports.entrySet())
 		{
@@ -250,43 +250,17 @@ public class QueryEvaluation {
 						reportRow.add((BindingSet)row);
 						count++;
 					}
+
+					String r3 = printReport(report);
+					FileUtils.write(new File(resultfile), r3);
+				
+					long runTime = System.currentTimeMillis() - startTime;
+					log.info("QUERY\n"+curQuery);
+					log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source count: " + QueryInfo.queryInfo.get().numSources.longValue());
+					//log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source Selection Time: " + QueryInfo.queryInfo.get().getSourceSelection().time);
+					FileUtils.write(new File(execTimeFile), String.valueOf(runTime));
 				}
-				String r3 = printReport(report);
-				FileUtils.write(new File(resultfile), r3);
-			  
-			    long runTime = System.currentTimeMillis() - startTime;
-			    //reportRow.add((Long)count); reportRow.add((Long)runTime);
-				//sstReportRow.add(QueryInfo.queryInfo.get().getSourceSelection().getStmtToSources());
-			    //sstReportRow.add((Long)count);
-			    //sstReportRow.add(QueryInfo.queryInfo.get().numSources.longValue());
-			    //sstReportRow.add(QueryInfo.queryInfo.get().totalSources.longValue());
-				log.info("QUERY\n"+curQuery);
-			    log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source count: " + QueryInfo.queryInfo.get().numSources.longValue());
-			    //log.info(curQueryName + ": Query exection time (msec): "+ runTime + ", Total Number of Records: " + count + ", Source Selection Time: " + QueryInfo.queryInfo.get().getSourceSelection().time);
-				/*statRow.add(curQueryName);
-				statRow.add("costfed");
-				statRow.add("instance_id");
-				statRow.add("batch_id");
-				statRow.add("attempt_id");
-				statRow.add(runTime);
-				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().nbAskQuery);
-				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().time);
-				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
-				String r4 = printReport(stat);*/
-				FileUtils.write(new File(execTimeFile), String.valueOf(runTime));
 			} catch (QueryInterruptedException e) {
-				/*reportRow.add("");
-				statRow.add(curQueryName);
-				statRow.add("costfed");
-				statRow.add("instance_id");
-				statRow.add("batch_id");
-				statRow.add("attempt_id");
-				statRow.add("timeout");
-				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().nbAskQuery);
-				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().time);
-				statRow.add(QueryInfo.queryInfo.get().getSourceSelection().planningTime);
-				String r4 = printReport(stat);
-				FileUtils.write(new File(statfile), r4);*/
 			} catch (Throwable e) {
 				e.printStackTrace();
 				log.error("", e);
