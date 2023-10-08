@@ -20,12 +20,16 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryInterruptedException;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.query.algebra.StatementPattern;
+import org.eclipse.rdf4j.query.explanation.Explanation;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.repository.sail.SailTupleQuery;
 import com.fluidops.fedx.Config;
+import com.fluidops.fedx.FedXConnection;
 import com.fluidops.fedx.FedXFactory;
+import com.fluidops.fedx.QueryManager;
 import com.fluidops.fedx.structures.QueryInfo;
 import com.fluidops.fedx.algebra.StatementSource;
+import com.fluidops.fedx.sail.FedXSailRepositoryConnection;
 
 import org.aksw.simba.quetsal.configuration.QuetzalConfig;
 import org.aksw.sparql.query.algebra.helpers.BGPGroupGenerator;
@@ -212,7 +216,11 @@ public class QueryEvaluation {
 				query.setMaxExecutionTime(timeout);
 				//System.out.println("TupleQuery: "+query);
 
-				queryExplainRow.add((String)((SailTupleQuery)query).getParsedQuery().toString());
+				FedXConnection fconn = (FedXConnection) repo.getConnection().getSailConnection();
+				QueryManager qManager = fconn.getQueryManager();
+				String qPlan = qManager.getQueryPlan(curQuery,fconn.getSummary());
+
+				queryExplainRow.add(qPlan);
 				String r2 = printReport(queryexplain);
 				FileUtils.write(new File(explanationfile), r2);
 				
