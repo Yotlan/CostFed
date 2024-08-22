@@ -3,6 +3,7 @@ package org.aksw.simba.start;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,22 +59,18 @@ public class QueryEvaluation {
 	public static void main(String[] args) throws Exception 
 	{
 		String cfgName = args[0];
-		String resultfile = args[2];
-		String provenancefile = args[3];
-		String explanationfile = args[4];
+		String resultfile = args[1];
+		String provenancefile = args[2];
+		String explanationfile = args[3];
 		// String statfile = args[5];
-		String timeout = args[5];
-		String summary = args[6];
-		String queries = args[7];
-		String noExec = args[8];
+		String timeout = args[4];
+		String summary = args[5];
+		String queries = args[6];
+		String noExec = args[7];
+		String endpointFile = args[8];
 
-		String localhost = args[1];
-		List<String> endpoints = new ArrayList<>();
+		List<String> endpoints = Files.readAllLines(Paths.get(endpointFile));
 
-		for(int i=9;i<args.length;++i){
-			endpoints.add(localhost+"/?default-graph-uri="+args[i]);
-		}
-		
 		//String host = "localhost";
 		//String host = "ws24348.avicomp.com";
 		//String host = "192.168.0.145";

@@ -7,6 +7,8 @@ import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -232,14 +234,11 @@ public class TBSSSummariesGenerator {
 		);
 		*/
 
-		String localhost = args[0];
-		List<String> endpoints = new ArrayList<>();
 
-		String outputFile = args[1];
+		String outputFile = args[0];
+		String endpointFile = args[1];
 
-		for(int i=2;i<args.length;++i){
-			endpoints.add(localhost+"/?default-graph-uri="+args[i]);
-		}
+		List<String> endpoints = Files.readAllLines(Paths.get(endpointFile));
 
 		//List<String> endpoints = endpointsMin2;
 		//String outputFile = "summaries/sumX-localhost5.n3";
